@@ -1,0 +1,31 @@
+{
+  "name": "sunsunbus-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "fixtures": "vite-node scripts/gen-fixtures.ts"
+  },
+  "dependencies": {
+    "idb": "^8.0.3",
+    "leaflet": "^1.9.4",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^22.20.5",
+    "@types/qrcode": "^1.5.6",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.7",
+    "vite-node": "^6.0.0",
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^3.2.7"
+  }
+}
