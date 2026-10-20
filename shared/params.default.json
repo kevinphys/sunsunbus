@@ -30,7 +30,7 @@
     "brakeThreshold": 1.0,
     "turnThreshold": 1.5,
     "jerkPercentile": 95,
-    "jerkFloor": 2.0,
+    "jerkFloor": 3.0,
     "jerkAbsThreshold": 10.0,
     "jerkMinSamplesForPercentile": 600,
     "minDurationSec": 0.3,
@@ -46,6 +46,6 @@
     },
     "penaltyPerWeightedEventPerKm": 10,
     "fallbackKmPerMin": 0.3,
-    "minKm": 0.1
+    "minKm": 1.0
   }
 }
