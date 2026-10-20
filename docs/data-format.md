@@ -16,7 +16,7 @@
 | `a_long` | m/s² | 縱向加速度，正＝加速、負＝煞車 |
 | `a_lat` | m/s² | 橫向加速度，正＝向左 |
 | `a_vert` | m/s² | 垂直加速度 |
-| `jerk_long, jerk_lat, jerk_mag` | m/s³ | 縱向、橫向 jerk 與水平 jerk 大小 |
+| `jerk_long, jerk_lat, jerk_mag` | m/s³ | 縱向、橫向加加速度（jerk，加速度的變化率）與水平加加速度大小 |
 | `stable` | 0/1 | 靜置判斷（1＝手機穩定放置，事件只採用這些資料） |
 | `segment` | 整數 | 校準段：手機被移動後重新校準，段號加一 |
 | `orient_source` | 文字 | 前進方向來源：`gps`（GPS 校準）、`pca`（加速度主軸）、`guess`（依擺放猜測） |
@@ -37,11 +37,11 @@
 
 | 欄位 | 說明 |
 |---|---|
-| `type` | `hard_brake` 急煞、`hard_accel` 急加速、`sharp_turn` 急轉彎、`high_jerk` 高 jerk |
+| `type` | `hard_brake` 急煞、`hard_accel` 急加速、`sharp_turn` 急轉彎、`high_jerk` 高加加速度 |
 | `label` | 中文名稱 |
 | `t_start_ms, t_end_ms, t_peak_ms` | 開始、結束、峰值時間 |
 | `duration_s` | 持續秒數 |
-| `peak_value` | 依類型的峰值：急煞為最小 `a_long`（負值）、急加速為最大 `a_long`、急轉彎為絕對值最大的 `a_lat`、jerk 為最大 `jerk_mag` |
+| `peak_value` | 依類型的峰值：急煞為最小 `a_long`（負值）、急加速為最大 `a_long`、急轉彎為絕對值最大的 `a_lat`、加加速度為最大 `jerk_mag` |
 | `peak_a_long, peak_a_lat, peak_jerk` | 事件期間各量的極值 |
 | `lat, lon, speed` | 峰值時間點之前最近的 GPS（5 秒內），沒有則空白 |
 | `orient_source` | 峰值當下的前進方向來源 |

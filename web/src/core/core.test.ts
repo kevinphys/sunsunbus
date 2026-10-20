@@ -205,14 +205,14 @@ describe('沒有 OS 線性加速度、沒有陀螺儀的裝置', () => {
   });
 });
 
-describe('高 jerk', () => {
-  // 0.15 秒內從 0 煞到 −2.5：jerk 約 16 m/s³（接近文獻中公車起步實測最大值 15.7）
+describe('高加加速度', () => {
+  // 0.15 秒內從 0 煞到 −2.5：加加速度約 16 m/s³（接近文獻中公車起步實測最大值 15.7）
   const r = run({
     durationSec: 70,
     aLong: busProfile((t) => pulse(t, 30, 1.5, -2.5, 0.15) + pulse(t, 45, 6, -0.6)),
     mount: { yawDeg: 0, tiltDeg: 0 },
   });
-  it('急煞開始時記錄到高 jerk 事件，峰值 > 8 m/s³', () => {
+  it('急煞開始時記錄到高加加速度事件，峰值 > 8 m/s³', () => {
     const jerks = r.events.filter((e) => e.type === 'high_jerk' && Math.abs(e.tPeak - r.samples[0].t - 30_000) < 1000);
     expect(jerks.length).toBeGreaterThanOrEqual(1);
     expect(Math.max(...jerks.map((e) => e.peakJerk))).toBeGreaterThan(8);

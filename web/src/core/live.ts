@@ -14,7 +14,7 @@ import { signVote } from './trip';
 const WARMUP_SAMPLES = 30;
 const SIGN_VOTES_NEEDED = 10;
 
-/** jerk 分布的即時直方圖（0.05 m/s³ 一格），用來估計 P95 */
+/** 加加速度分布的即時直方圖（0.05 m/s³ 一格），用來估計 P95 */
 class Histogram {
   private bins = new Uint32Array(2000);
   count = 0;

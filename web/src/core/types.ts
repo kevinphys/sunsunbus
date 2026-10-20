@@ -50,7 +50,7 @@ export const EVENT_LABELS: Record<EventType, string> = {
   hard_brake: '急煞',
   hard_accel: '急加速',
   sharp_turn: '急轉彎',
-  high_jerk: '高 jerk',
+  high_jerk: '高加加速度',
 };
 
 /** 階段 A 輸出：已換到「水平面 + 垂直」座標，但前進方向尚未決定 */
@@ -81,10 +81,10 @@ export interface ProcessedSample {
   aLat: number;
   /** 垂直加速度 (m/s²) */
   aVert: number;
-  /** jerk (m/s³) */
+  /** 加加速度（jerk，加速度的變化率，m/s³） */
   jerkLong: number;
   jerkLat: number;
-  /** 水平 jerk 大小 */
+  /** 水平加加速度大小 */
   jerkMag: number;
   stable: boolean;
   segment: number;
@@ -97,7 +97,7 @@ export interface TripEvent {
   tStart: number;
   tEnd: number;
   tPeak: number;
-  /** 依類型的峰值：急加速取最大 aLong、急煞取最小 aLong、急轉彎取絕對值最大的 aLat、jerk 取最大 jerkMag */
+  /** 依類型的峰值：急加速取最大 aLong、急煞取最小 aLong、急轉彎取絕對值最大的 aLat、加加速度取最大 jerkMag */
   peakValue: number;
   peakALong: number;
   peakALat: number;

@@ -1,5 +1,5 @@
 // 即時折線圖（canvas，不用圖表函式庫以減少耗電與體積）。
-// 上圖：縱向／橫向加速度與門檻線；下圖：jerk。不穩定時段用灰底標示。
+// 上圖：縱向／橫向加速度與門檻線；下圖：加加速度。不穩定時段用灰底標示。
 import type { Params } from '../core/params';
 import type { ProcessedSample } from '../core/types';
 
@@ -115,6 +115,6 @@ export class LiveChart {
       { key: 'aLong', color: COLORS.long },
     ]);
     const jt = this.jerkThreshold();
-    panel(h1 + gap, h2, Math.max(15, jt * 1.5), [{ v: jt, label: `jerk ${jt.toFixed(1)}` }, { v: -jt, label: '' }], [{ key: 'jerk', color: COLORS.jerk }]);
+    panel(h1 + gap, h2, Math.max(15, jt * 1.5), [{ v: jt, label: `加加速度 ${jt.toFixed(1)}` }, { v: -jt, label: '' }], [{ key: 'jerk', color: COLORS.jerk }]);
   }
 }

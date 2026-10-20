@@ -3,7 +3,7 @@
 // 與即時處理的差別：
 // - 先用整趟的 deviceorientation 判斷加速度正負號慣例；
 // - 第一輪跑完後，每個校準段改用「該段最終」的前進方向回頭重算（即時版只能用當下的估計）；
-// - 高 jerk 門檻用整趟分布的百分位。
+// - 高加加速度門檻用整趟分布的百分位。
 import type { Params } from './params';
 import { jerkThreshold } from './params';
 import type { GpsFix, MotionSample, OrientationSample, ProcessedSample, SegmentInfo, TripEvent, TripSummary } from './types';

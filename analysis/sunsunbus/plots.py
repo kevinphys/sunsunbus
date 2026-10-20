@@ -44,7 +44,7 @@ def plot_trip(r: TripResult, title: str, path: Path | str, params: dict, manual_
     for ax, y, label, color, lines in (
         (axes[0], a_long, "縱向 a (m/s²)", "#0f766e", [e["accelThreshold"], -e["brakeThreshold"]]),
         (axes[1], a_lat, "橫向 a (m/s²)", "#d97706", [e["turnThreshold"], -e["turnThreshold"]]),
-        (axes[2], jerk, "縱向 jerk (m/s³)", "#6366f1", [r.jerk_threshold, -r.jerk_threshold]),
+        (axes[2], jerk, "縱向加加速度 (m/s³)", "#6366f1", [r.jerk_threshold, -r.jerk_threshold]),
     ):
         _shade_unstable(ax, t, stable)
         ax.plot(t, y, color=color, lw=0.8)
@@ -67,7 +67,7 @@ def plot_trip(r: TripResult, title: str, path: Path | str, params: dict, manual_
 
 
 def plot_distributions(items, path: Path | str, by: str = "placement"):
-    """|a_long|、|a_lat|、jerk 的分布（log 縱軸），依放置方式或座位分組比較。"""
+    """|a_long|、|a_lat|、加加速度的分布（log 縱軸），依放置方式或座位分組比較。"""
     groups: dict[str, dict[str, list]] = {}
     for trip, r in items:
         key = (getattr(trip, by, "") if by != "route" else trip.route) or "未填"
@@ -78,7 +78,7 @@ def plot_distributions(items, path: Path | str, by: str = "placement"):
                 d["a_lat"].append(s.a_lat)
                 d["jerk_mag"].append(s.jerk_mag)
     fig, axes = plt.subplots(1, 3, figsize=(15, 4), constrained_layout=True)
-    for ax, (metric, label, rng) in zip(axes, (("a_long", "縱向 a (m/s²)", (-4, 4)), ("a_lat", "橫向 a (m/s²)", (-4, 4)), ("jerk_mag", "jerk (m/s³)", (0, 20)))):
+    for ax, (metric, label, rng) in zip(axes, (("a_long", "縱向 a (m/s²)", (-4, 4)), ("a_lat", "橫向 a (m/s²)", (-4, 4)), ("jerk_mag", "加加速度 (m/s³)", (0, 20)))):
         for key, d in groups.items():
             if d[metric]:
                 ax.hist(d[metric], bins=120, range=rng, histtype="step", density=True, label=f"{key}（n={len(d[metric])}）")
@@ -98,7 +98,7 @@ def plot_phone_vs_box(phone: TripResult, box: TripResult, path: Path | str, titl
         axes[0].plot(t, [s.a_long for s in r.samples], color=color, lw=0.8, label=name)
         axes[1].plot(t, [s.jerk_mag for s in r.samples], color=color, lw=0.8, label=name)
     axes[0].set_ylabel("縱向 a (m/s²)")
-    axes[1].set_ylabel("jerk (m/s³)")
+    axes[1].set_ylabel("加加速度 (m/s³)")
     axes[1].set_xlabel("時間 (s)")
     axes[0].legend()
     axes[0].set_title(title, loc="left")

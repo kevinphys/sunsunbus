@@ -13,7 +13,7 @@ export interface Params {
   useOsLinearAcceleration: boolean;
   /** 低通濾波截止頻率 (Hz)：去除車身震動 */
   lowpassCutoffHz: number;
-  /** jerk 差分的時間跨度 (s) */
+  /** 加加速度（jerk）差分的時間跨度 (s) */
   jerkWindowSec: number;
   stability: {
     windowSec: number;
@@ -45,7 +45,7 @@ export interface Params {
     jerkAbsThreshold: number;
     jerkMinSamplesForPercentile: number;
     minDurationSec: number;
-    /** jerk 是微分量，尖峰本來就短，用較短的最短持續時間 */
+    /** 加加速度是微分量，尖峰本來就短，用較短的最短持續時間 */
     jerkMinDurationSec: number;
     endGapSec: number;
   };
@@ -79,7 +79,7 @@ function deepMerge(target: any, src: any): any {
 }
 
 /**
- * 高 jerk 門檻：本趟 jerk 分布的第 N 百分位（不低於 jerkFloor），或絕對門檻，取較低者。
+ * 高加加速度門檻：本趟加加速度分布的第 N 百分位（不低於 jerkFloor），或絕對門檻，取較低者。
  * 也就是「超過 P95 或超過絕對門檻」都算；jerkFloor 避免很平穩的一趟把小擾動也標成事件。
  * 樣本不足時只用絕對門檻。
  */

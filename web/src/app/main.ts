@@ -143,7 +143,7 @@ function recordingView(setup: TripSetup, params: Params) {
         ${EVENT_TYPES.map((t) => `<div class="count" data-type="${t}" style="--c:${EVENT_COLORS[t]}"><b id="c-${t}">0</b><span>${EVENT_LABELS[t]}</span></div>`).join('')}
       </div>
       <canvas id="chart" class="chart"></canvas>
-      <div class="legend"><span style="--c:#0f766e">縱向 a</span><span style="--c:#d97706">橫向 a</span><span style="--c:#6366f1">jerk</span><span class="unstable">不穩定</span></div>
+      <div class="legend"><span style="--c:#0f766e">縱向 a</span><span style="--c:#d97706">橫向 a</span><span style="--c:#6366f1">加加速度</span><span class="unstable">不穩定</span></div>
       <div class="meta" id="meta"></div>
       <div class="row">
         <button id="mark" class="secondary">✋ 剛剛急煞了</button>
@@ -267,9 +267,9 @@ async function summaryView(id: string) {
         ${peak('最大加速', s.peaks.maxAccel, 'm/s²')}
         ${peak('最大煞車', s.peaks.maxBrake, 'm/s²')}
         ${peak('最大橫向', s.peaks.maxLat, 'm/s²')}
-        ${peak('最大 jerk', s.peaks.maxJerk, 'm/s³')}
+        ${peak('最大加加速度', s.peaks.maxJerk, 'm/s³')}
       </div>
-      <p class="sub">穩定量測 ${fmt(s.stableRatio * 100, 0)}%・取樣 ${fmt(s.sampleRateHz, 0)} Hz・jerk 門檻 ${fmt(s.jerkThreshold, 1)} m/s³・每公里 ${fmt(s.eventsPerKm, 1)} 次事件・超標時間 ${fmt(s.exceedanceRatio * 100, 1)}%
+      <p class="sub">穩定量測 ${fmt(s.stableRatio * 100, 0)}%・取樣 ${fmt(s.sampleRateHz, 0)} Hz・加加速度門檻 ${fmt(s.jerkThreshold, 1)} m/s³・每公里 ${fmt(s.eventsPerKm, 1)} 次事件・超標時間 ${fmt(s.exceedanceRatio * 100, 1)}%
       ${meta.gaps.length ? `<br>⚠️ 中途有 ${meta.gaps.length} 段畫面離開、未量測` : ''}</p>
       <div id="map" class="map"></div>
       <button id="thanks" class="big thanks">🙏 謝謝司機${meta.thanks.length ? `（已送出 ${meta.thanks.length}）` : ''}</button>
@@ -281,7 +281,7 @@ async function summaryView(id: string) {
       </div>
       ${events.length ? `
       <details class="card"><summary>事件列表（${events.length}）</summary>
-        <div class="events-wrap"><table class="events"><thead><tr><th>時間</th><th>類型</th><th>峰值</th><th>jerk</th><th>km/h</th></tr></thead><tbody>
+        <div class="events-wrap"><table class="events"><thead><tr><th>時間</th><th>類型</th><th>峰值</th><th>加加速度</th><th>km/h</th></tr></thead><tbody>
         ${events.map((e) => `<tr><td>${new Date(e.tPeak).toLocaleTimeString()}</td><td style="color:${EVENT_COLORS[e.type]}">${EVENT_LABELS[e.type]}</td><td>${fmt(e.peakValue, 2)}</td><td>${fmt(e.peakJerk, 1)}</td><td>${e.speed === null ? '–' : fmt(e.speed * 3.6, 0)}</td></tr>`).join('')}
         </tbody></table></div>
       </details>` : ''}
@@ -372,6 +372,7 @@ function settingsView() {
       <button class="back" id="back">← 首頁</button>
       <h2>設定</h2>
       <p class="sub">門檻與濾波參數（只影響這支手機；預設值依 Krašna et al. 2021：加速 1.5、煞車 1.0 m/s²）。</p>
+      <p class="sub">加加速度（jerk）是加速度的變化率（m/s³）：加速度變化越突然，乘客越容易站不穩。</p>
       <form id="params" class="card settings">
         ${SETTING_FIELDS.map(([path, label, unit, step]) => `
           <label class="field inline"><span>${label}</span>

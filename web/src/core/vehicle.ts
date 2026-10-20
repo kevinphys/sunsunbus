@@ -1,5 +1,5 @@
-// 階段 C：把水平加速度旋轉到車輛座標，並計算 jerk。
-// jerk 先在手機水平基底上差分再旋轉：前進方向估計更新時才不會產生假的 jerk 尖峰。
+// 階段 C：把水平加速度旋轉到車輛座標，並計算加加速度。
+// 加加速度先在手機水平基底上差分再旋轉：前進方向估計更新時才不會產生假的加加速度尖峰。
 import type { Params } from './params';
 import type { FrameSample, OrientSource, ProcessedSample } from './types';
 

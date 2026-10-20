@@ -105,7 +105,7 @@ def rates_by(trips: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
 
 
 def distribution(items: list[tuple[Trip, TripResult]], by: str = "placement") -> pd.DataFrame:
-    """穩定區段的 |a_long|、|a_lat|、jerk 分布百分位，依 by（例如放置方式、座位）分組。"""
+    """穩定區段的 |a_long|、|a_lat|、加加速度分布百分位，依 by（例如放置方式、座位）分組。"""
     rows = []
     groups: dict[str, dict[str, list]] = {}
     for trip, r in items:

@@ -1,7 +1,7 @@
 // 本趟摘要與「平穩分數」。
 //
 // 平穩分數公式（可在 shared/params.default.json 的 score 區段調整）：
-//   加權事件數 W = Σ 權重[類型] × 次數        （預設 急煞 1.5、急加速 1、急轉彎 1、高 jerk 0.5）
+//   加權事件數 W = Σ 權重[類型] × 次數        （預設 急煞 1.5、急加速 1、急轉彎 1、高加加速度 0.5）
 //   里程 km     = max(GPS 距離, minKm)；若 GPS 距離 < minKm，改用 max(時長(分) × fallbackKmPerMin, minKm)
 //                 （公車平均約 18 km/h；minKm 預設 1 km，避免很短的一趟一個事件就扣到 0 分）
 //   分數        = clamp(100 − penaltyPerWeightedEventPerKm × W / km, 0, 100)

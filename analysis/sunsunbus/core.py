@@ -1,4 +1,4 @@
-"""感測處理演算法的 Python 移植版。
+"""感測處理演算法的 Python 移植版（加加速度＝jerk，變數名稱沿用 jerk）。
 
 逐行對應 web/src/core/（frame.ts、orientation.ts、vehicle.ts、events.ts、summary.ts、trip.ts 的批次版
 process_trip），參數讀同一份 shared/params.default.json。修改演算法時兩邊要一起改，
@@ -15,7 +15,7 @@ from typing import Callable, Optional
 from .params import Params
 
 EVENT_TYPES = ["hard_brake", "hard_accel", "sharp_turn", "high_jerk"]
-EVENT_LABELS = {"hard_brake": "急煞", "hard_accel": "急加速", "sharp_turn": "急轉彎", "high_jerk": "高 jerk"}
+EVENT_LABELS = {"hard_brake": "急煞", "hard_accel": "急加速", "sharp_turn": "急轉彎", "high_jerk": "高加加速度"}
 
 Vec3 = tuple[float, float, float]
 
