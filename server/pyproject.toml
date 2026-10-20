@@ -1,0 +1,16 @@
+[project]
+name = "sunsunbus-server"
+version = "0.1.0"
+description = "順順行 sunsunbus 選用後端：只收匿名摘要與事件"
+requires-python = ">=3.10"
+dependencies = ["fastapi>=0.115", "uvicorn>=0.30"]
+
+[dependency-groups]
+dev = ["pytest>=8.0", "httpx>=0.27"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
