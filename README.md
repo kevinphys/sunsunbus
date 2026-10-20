@@ -5,7 +5,7 @@
 用乘客手機量測台北公車的加速度、急煞、急轉彎與 jerk，補上「台北沒有公開實測資料」的空白。
 本 repo 是黑客松的階段一 prototype：一個手機網頁（PWA），加上電腦端的 Python 分析工具。
 
-任務說明見 [`sunsunbus-claude-code-任務書.md`](sunsunbus-claude-code-任務書.md)；實測流程見 [`docs/field-test-plan.md`](docs/field-test-plan.md)。
+實測流程見 [`docs/field-test-plan.md`](docs/field-test-plan.md)。
 
 ## 功能
 

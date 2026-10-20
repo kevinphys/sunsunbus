@@ -11,3 +11,6 @@ analysis/data/*
 analysis/output/
 server/*.db
 .env
+
+# 任務書只留在本機，不進 git
+sunsunbus-claude-code-任務書.md
