@@ -10,7 +10,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "fixtures": "vite-node scripts/gen-fixtures.ts"
+    "fixtures": "vite-node scripts/gen-fixtures.ts",
+    "qr": "node scripts/qr.mjs",
+    "icons": "node scripts/make-icons.mjs"
   },
   "dependencies": {
     "idb": "^8.0.3",
