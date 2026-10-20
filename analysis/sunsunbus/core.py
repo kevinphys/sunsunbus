@@ -245,12 +245,19 @@ def wrap_angle(a: float) -> float:
 # ---------------------------------------------------------------- 階段 A（frame.ts）
 
 
+def _ema(prev: Optional[Vec3], x: Vec3, a: float) -> Vec3:
+    if prev is None:
+        return tuple(x)  # type: ignore[return-value]
+    return (prev[0] + a * (x[0] - prev[0]), prev[1] + a * (x[1] - prev[1]), prev[2] + a * (x[2] - prev[2]))
+
+
 class FrameStage:
     def __init__(self, p: Params, fs: float, accel_sign: int = 1):
         self.p = p
         self.fs = fs
         self.accel_sign = accel_sign
         self.g: Optional[Vec3] = None
+        self.g_slow: Optional[Vec3] = None
         self.last_t: Optional[float] = None
         c = p["lowpassCutoffHz"]
         self.lpf = (Biquad(c, fs), Biquad(c, fs), Biquad(c, fs))
@@ -272,12 +279,19 @@ class FrameStage:
         has_lin = p["useOsLinearAcceleration"] and s.ax is not None and s.ay is not None and s.az is not None
         if has_lin:
             acc = (s.ax, s.ay, s.az)
-            self.g = self._ema(sub(inc_g, acc), ema_alpha(dt, p["osGravitySmoothSec"]))
+            self.g = _ema(self.g, sub(inc_g, acc), ema_alpha(dt, p["osGravitySmoothSec"]))
+            self.g_slow = self.g
             lin = acc
         else:
-            self.g = self._ema(inc_g, ema_alpha(dt, p["gravityTauSec"]))
-            lin = sub(inc_g, self.g)
+            self.g = _ema(self.g, inc_g, ema_alpha(dt, p["gravityTauSec"]))
+            moved_ms = 0 if self.unstable_since is None or self.ok_since is not None else s.t - self.unstable_since
+            if self.g_slow is None or (not self.stable and moved_ms >= p["stability"]["recalibrateAfterUnstableSec"] * 1000):
+                self.g_slow = self.g
+            elif self.stable:
+                self.g_slow = _ema(self.g_slow, inc_g, ema_alpha(dt, p["gravityStableTauSec"]))
+            lin = sub(inc_g, self.g_slow)
         up = scale(normalize(self.g), self.accel_sign)
+        up_lin = scale(normalize(self.g_slow), self.accel_sign)
         lin = scale(lin, self.accel_sign)
         f = (self.lpf[0].process(lin[0]), self.lpf[1].process(lin[1]), self.lpf[2].process(lin[2]))
 
@@ -292,15 +306,9 @@ class FrameStage:
             self._start_segment(up, False)
         self._update_stability(s.t, up, grav_angle, tilt_rms)
 
-        e1 = horizontalize(self.ref_axis, up)
-        e2 = cross(up, e1)
-        return FrameSample(s.t, dot(f, e1), dot(f, e2), dot(f, up), self.stable, self.segment, self.guess_theta, grav_angle, tilt_rms)
-
-    def _ema(self, x: Vec3, a: float) -> Vec3:
-        if self.g is None:
-            return tuple(x)  # type: ignore[return-value]
-        g = self.g
-        return (g[0] + a * (x[0] - g[0]), g[1] + a * (x[1] - g[1]), g[2] + a * (x[2] - g[2]))
+        e1 = horizontalize(self.ref_axis, up_lin)
+        e2 = cross(up_lin, e1)
+        return FrameSample(s.t, dot(f, e1), dot(f, e2), dot(f, up_lin), self.stable, self.segment, self.guess_theta, grav_angle, tilt_rms)
 
     def _update_window(self, t: float, up: Vec3, tilt2: float):
         win_ms = self.p["stability"]["windowSec"] * 1000

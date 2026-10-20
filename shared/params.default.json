@@ -1,5 +1,6 @@
 {
   "gravityTauSec": 1.0,
+  "gravityStableTauSec": 30.0,
   "osGravitySmoothSec": 0.2,
   "useOsLinearAcceleration": true,
   "lowpassCutoffHz": 3.0,

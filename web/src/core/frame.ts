@@ -2,7 +2,9 @@
 //
 // 做法：
 // 1. 重力向量：有 OS 線性加速度時用 (accelerationIncludingGravity − acceleration) 再輕微平滑；
-//    沒有時對 accelerationIncludingGravity 做指數低通。正規化後得到「向上」單位向量 up。
+//    沒有時（部分 Android、硬體感測盒）對 accelerationIncludingGravity 做兩個指數低通：
+//    快的（約 1 秒）給靜置偵測用；慢的（穩定時約 30 秒，不穩定時跟著快的）拿來扣重力。
+//    只用快的會變成 1 秒的高通濾波，持續好幾秒的起步加速會被當成重力濾掉。
 // 2. 線性加速度在手機座標做二階 Butterworth 低通（去車身震動），再投影到
 //    水平基底 (e1, e2) 與 up。e1 是本段固定的手機軸投影到水平面，所以車子轉彎不會影響基底。
 // 3. 靜置偵測：1 秒滑動視窗內 (a) up 方向相對視窗平均的最大偏角、
@@ -12,6 +14,11 @@ import type { Params } from './params';
 import type { FrameSample, MotionSample } from './types';
 import { Biquad, angleDeg, cross, dot, emaAlpha, horizontalize, normalize, scale, sub, type Vec3 } from './math';
 
+function ema(prev: Vec3 | null, x: Vec3, a: number): Vec3 {
+  if (prev === null) return [...x];
+  return [prev[0] + a * (x[0] - prev[0]), prev[1] + a * (x[1] - prev[1]), prev[2] + a * (x[2] - prev[2])];
+}
+
 interface WindowEntry {
   t: number;
   up: Vec3;
@@ -20,6 +27,7 @@ interface WindowEntry {
 
 export class FrameStage {
   private g: Vec3 | null = null;
+  private gSlow: Vec3 | null = null;
   private lastT: number | null = null;
   private lpf: [Biquad, Biquad, Biquad];
   private win: WindowEntry[] = [];
@@ -55,14 +63,23 @@ export class FrameStage {
     if (hasLin) {
       const acc: Vec3 = [s.ax!, s.ay!, s.az!];
       const gRaw = sub(incG, acc);
-      this.g = this.ema(gRaw, emaAlpha(dt, p.osGravitySmoothSec));
+      this.g = ema(this.g, gRaw, emaAlpha(dt, p.osGravitySmoothSec));
+      this.gSlow = this.g;
       lin = acc;
     } else {
-      this.g = this.ema(incG, emaAlpha(dt, p.gravityTauSec));
-      lin = sub(incG, this.g);
+      this.g = ema(this.g, incG, emaAlpha(dt, p.gravityTauSec));
+      // 穩定時慢慢更新；短暫不穩定（例如沒有陀螺儀時的急煞）先凍結；
+      // 不穩定超過重新校準的時間（手機真的被移動）才跟上快速估計
+      // 與開新校準段的判斷一致：只計算「條件不成立」的時間，不含恢復後等待穩定的那段
+      const movedMs = this.unstableSince === null || this.okSince !== null ? 0 : s.t - this.unstableSince;
+      if (this.gSlow === null || (!this.stable && movedMs >= p.stability.recalibrateAfterUnstableSec * 1000)) this.gSlow = this.g;
+      else if (this.stable) this.gSlow = ema(this.gSlow, incG, emaAlpha(dt, p.gravityStableTauSec));
+      lin = sub(incG, this.gSlow);
     }
-    // accelSign 修正部分平台加速度正負號相反的問題，使 up 指向天空
+    // accelSign 修正部分平台加速度正負號相反的問題，使 up 指向天空。
+    // up（快）給靜置偵測；upLin（慢）給投影
     const up = scale(normalize(this.g), this.accelSign);
+    const upLin = scale(normalize(this.gSlow), this.accelSign);
     lin = scale(lin, this.accelSign);
     const f: Vec3 = [this.lpf[0].process(lin[0]), this.lpf[1].process(lin[1]), this.lpf[2].process(lin[2])];
 
@@ -78,24 +95,19 @@ export class FrameStage {
     if (this.segUp === null) this.startSegment(up, false);
     this.updateStability(s.t, up, gravAngle, tiltRms);
 
-    const e1 = horizontalize(this.refAxis, up);
-    const e2 = cross(up, e1);
+    const e1 = horizontalize(this.refAxis, upLin);
+    const e2 = cross(upLin, e1);
     return {
       t: s.t,
       h1: dot(f, e1),
       h2: dot(f, e2),
-      v: dot(f, up),
+      v: dot(f, upLin),
       stable: this.stable,
       segment: this.segment,
       guessTheta: this.guessTheta,
       gravAngle,
       tiltRms,
     };
-  }
-
-  private ema(x: Vec3, a: number): Vec3 {
-    if (this.g === null) return [...x];
-    return [this.g[0] + a * (x[0] - this.g[0]), this.g[1] + a * (x[1] - this.g[1]), this.g[2] + a * (x[2] - this.g[2])];
   }
 
   private updateWindow(t: number, up: Vec3, tilt2: number) {

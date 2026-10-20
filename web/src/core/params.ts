@@ -4,8 +4,10 @@ import defaults from '../../../shared/params.default.json';
 import type { EventType } from './types';
 
 export interface Params {
-  /** 沒有 OS 線性加速度時，用 accelerationIncludingGravity 低通估計重力的時間常數 (s) */
+  /** 沒有 OS 線性加速度時，用 accelerationIncludingGravity 低通估計重力的時間常數 (s)：用於靜置偵測 */
   gravityTauSec: number;
+  /** 同上，但手機穩定時用來扣重力的慢速估計 (s)；太短會把持續的加減速當成重力濾掉 */
+  gravityStableTauSec: number;
   /** 有 OS 線性加速度時，平滑 (accIncG − acc) 重力向量的時間常數 (s) */
   osGravitySmoothSec: number;
   useOsLinearAcceleration: boolean;
