@@ -209,7 +209,7 @@ export class OrientationEstimator {
         if (r >= o.gpsMinR) return { theta: Math.atan2(c2, c1), source: 'gps', quality: r };
       }
     }
-    // 2. PCA 主軸 + 起步方向
+    // 2. PCA 主軸 + 速度不為負決定正負號
     if (s.pn >= o.pcaMinSamples) {
       const tr = s.pxx + s.pyy;
       const diff = Math.sqrt((s.pxx - s.pyy) ** 2 + 4 * s.pxy * s.pxy);
