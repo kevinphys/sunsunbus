@@ -1,0 +1,51 @@
+{
+  "gravityTauSec": 1.0,
+  "osGravitySmoothSec": 0.2,
+  "useOsLinearAcceleration": true,
+  "lowpassCutoffHz": 3.0,
+  "jerkWindowSec": 0.1,
+  "stability": {
+    "windowSec": 1.0,
+    "maxGravityAngleDeg": 4.0,
+    "maxTiltRateRmsDps": 8.0,
+    "minStableSec": 1.5,
+    "recalibrateAfterUnstableSec": 1.0,
+    "recalibrateGravityDriftDeg": 15.0
+  },
+  "orientation": {
+    "gpsMaxAccuracyM": 30,
+    "gpsMinIntervalSec": 0.5,
+    "gpsMaxIntervalSec": 3.0,
+    "gpsMinPairs": 8,
+    "gpsMinDvdtStd": 0.15,
+    "gpsMinR": 0.5,
+    "pcaMinSamples": 300,
+    "pcaMinHorizAccel": 0.3,
+    "pcaMinAnisotropy": 1.5,
+    "velocityDeadbandAccel": 0.15,
+    "velocityPathIntervalSec": 0.5
+  },
+  "events": {
+    "accelThreshold": 1.5,
+    "brakeThreshold": 1.0,
+    "turnThreshold": 1.5,
+    "jerkPercentile": 95,
+    "jerkFloor": 2.0,
+    "jerkAbsThreshold": 10.0,
+    "jerkMinSamplesForPercentile": 600,
+    "minDurationSec": 0.3,
+    "jerkMinDurationSec": 0.1,
+    "endGapSec": 0.5
+  },
+  "score": {
+    "weights": {
+      "hard_brake": 1.5,
+      "hard_accel": 1.0,
+      "sharp_turn": 1.0,
+      "high_jerk": 0.5
+    },
+    "penaltyPerWeightedEventPerKm": 10,
+    "fallbackKmPerMin": 0.3,
+    "minKm": 0.1
+  }
+}
