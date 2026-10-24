@@ -61,8 +61,8 @@ async function loadStops(route: string, direction: number): Promise<{ stops: Sto
 
 // ---------- ⓪ 歡迎 ----------
 
-/** 試玩模擬的網址：假裝在中山幹線上，4 倍速，進來直接開始 */
-const SIM_HREF = '?simulate=1&speed=4#/go';
+/** 試玩模擬的網址：假裝在中山幹線上，4 倍速；和真的搭車一樣先到上車畫面確認路線 */
+const SIM_HREF = '?simulate=1&speed=4#/board';
 
 const STEPS = [
   { bg: 'var(--drop)', title: '上車，把手機放上支架', body: '小水滴跳上車，自動記下你在哪一站上車。' },
@@ -82,7 +82,7 @@ function welcomeView() {
         <p class="hero-sub">坐上公車，你會沿路替每個站間澆水。<br>車開得順，花就開了。</p>
         ${art.welcomePath}
       </div>
-      <p class="section-b">小水滴的一趟車</p>
+      <p class="section-b">如何開始</p>
       <ol class="steps">
         ${STEPS.map((st, i) => `<li class="step in${i + 1}"><span class="num" style="background:${st.bg}">${i + 1}</span><div><p class="step-title">${st.title}</p><p class="small">${st.body}</p></div></li>`).join('')}
       </ol>
@@ -131,7 +131,7 @@ function savePref(k: keyof Prefs, v: string) {
   saveLastSetup({ ...loadLastSetup<Prefs>(), ...loadPrefs(), [k]: v });
 }
 
-function homeView(pending: Pending | null = stickerFromUrl(), manual = false, opts: { autostart?: boolean; prefsOpen?: boolean } = {}) {
+function homeView(pending: Pending | null = stickerFromUrl(), manual = false, opts: { prefsOpen?: boolean } = {}) {
   const prefs = loadPrefs();
   const n = balance(loadLedger());
   const label = (list: [string, string][], v: string) => list.find(([k]) => k === v)?.[1] ?? '';
@@ -212,7 +212,7 @@ function homeView(pending: Pending | null = stickerFromUrl(), manual = false, op
     return;
   }
   let stopInfo: Awaited<ReturnType<typeof loadStops>> = null;
-  const stopsReady = (async () => {
+  void (async () => {
     stopInfo = await loadStops(pending.route, pending.direction);
     const extra = app.querySelector('#stop-extra');
     if (!extra) return;
@@ -245,7 +245,6 @@ function homeView(pending: Pending | null = stickerFromUrl(), manual = false, op
   };
   $('#tap').onclick = () => go();
   $('#seat-go').onclick = () => go('seat');
-  if (opts.autostart) void stopsReady.then(() => go());
 }
 
 /** 模擬模式要播放的行程：沿這條路線挑出的 7 個真實站牌；路線沒有站牌資料（或站距都不合適）就用停靠推測 */
@@ -711,11 +710,6 @@ function route() {
       return welcomeView();
     case 'board':
       return homeView();
-    case 'go':
-      // 試玩模擬：直接上車開始
-      if (!SIMULATE) return location.replace(SIM_HREF);
-      history.replaceState(null, '', '#/board');
-      return homeView(SIM_PENDING, false, { autostart: true });
     default:
       // 碰貼紙或掃碼進來直接到上車畫面，其他從歡迎頁開始
       return stickerFromUrl() ? homeView() : welcomeView();
