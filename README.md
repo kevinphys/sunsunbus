@@ -1,17 +1,20 @@
 # 順順行 sunsunbus
 
+線上試玩：<https://kevinphys.github.io/sunsunbus/play.html>
+
 > 開順不開慢：讓人跌倒的是加速度與加加速度（jerk），不是速度。
 
 用乘客手機量測台北公車的加速度、急煞、急轉彎與加加速度，補上「台北沒有公開實測資料」的空白。
 
-**加加速度（jerk）**是加速度的變化率，單位 m/s³。加速度變化越突然（例如煞車一下踩到底、起步猛催油門），加加速度越大，站立乘客越容易來不及反應而失去平衡。
+**加加速度（jerk）** 是加速度的變化率，單位 m/s³。加速度變化越突然（例如煞車一下踩到底、起步猛催油門），加加速度越大，站立乘客越容易來不及反應而失去平衡。
 本 repo 是黑客松的階段一 prototype：一個手機網頁（PWA），加上電腦端的 Python 分析工具。
 
-實測流程見 [`docs/field-test-plan.md`](docs/field-test-plan.md)。
 
-**原型二（遊戲版）**：`play.html`，乘客是小水滴，每個站間依平穩度開花（盛開、小花、乾土），有效的一趟採 1 顆果實。
+**[原型一（實測版）](<https://kevinphys.github.io/sunsunbus/>)**：免安裝的網頁 App，讓乘客上車就能透過手機偵測，得到可視化資料，實測流程見 [`docs/field-test-plan.md`](docs/field-test-plan.md)。
+
+**[原型二（遊戲版）](<https://kevinphys.github.io/sunsunbus/play.html>)**：乘客是小水滴，每個站間依平穩度開花（盛開、小花、乾土），有效的一趟採 1 顆果實。
 規則、試玩方式與實測校正見 [`docs/prototype2.md`](docs/prototype2.md)。
-線上試玩：<https://kevinphys.github.io/sunsunbus/play.html?simulate=1&speed=8>（研究用記錄器：<https://kevinphys.github.io/sunsunbus/>）
+
 
 ## 功能
 
