@@ -3,9 +3,25 @@ const svg = (label: string, w: number, h: number, vb: string, body: string) =>
   `<svg role="img" aria-label="${label}" width="${w}" height="${h}" viewBox="${vb}">${body}</svg>`;
 
 export const dropReady = svg(
-  '小水滴角色，準備上車', 90, 104, '0 0 96 112',
-  '<path d="M48 6 C 30 36, 14 56, 14 74 A 34 34 0 0 0 82 74 C 82 56, 66 36, 48 6 Z" fill="#7CC4E4" stroke="#2C7FA8" stroke-width="3"/><circle cx="36" cy="72" r="5" fill="#15302B"/><circle cx="60" cy="72" r="5" fill="#15302B"/><path d="M38 88 Q 48 96 58 88" fill="none" stroke="#15302B" stroke-width="3" stroke-linecap="round"/><ellipse cx="32" cy="52" rx="6" ry="10" fill="#D8F0FA"/>',
+  '你這顆小水滴，準備上車', 92, 106, '0 0 96 112',
+  '<path d="M48 6 C 30 36, 14 56, 14 74 A 34 34 0 0 0 82 74 C 82 56, 66 36, 48 6 Z" fill="#7CC4E4" stroke="#2C7FA8" stroke-width="3"/><ellipse class="eye" cx="36" cy="72" rx="5" ry="5.5" fill="#15302B"/><ellipse class="eye" cx="60" cy="72" rx="5" ry="5.5" fill="#15302B"/><path d="M38 88 Q 48 96 58 88" fill="none" stroke="#15302B" stroke-width="3" stroke-linecap="round"/><ellipse cx="32" cy="52" rx="6" ry="10" fill="#D8F0FA"/>',
 );
+
+// 歡迎頁（wireframe ⓪）：會眨眼、臉紅的小水滴，底下有漣漪與閃光
+export const welcomeSparkles = `<svg aria-hidden="true" width="150" height="140" viewBox="0 0 150 140" class="sparkles"><ellipse class="ripple" cx="75" cy="124" rx="44" ry="9" fill="none" stroke="#7CC4E4" stroke-width="2"/><ellipse class="ripple r2" cx="75" cy="124" rx="44" ry="9" fill="none" stroke="#7CC4E4" stroke-width="2"/><g fill="#F2A33A"><path class="tw" d="M18 30 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/><path class="tw t2" d="M130 22 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/><path class="tw t3" d="M136 92 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/></g></svg>`;
+
+export const dropHero = svg(
+  '你就是這顆小水滴', 96, 112, '0 0 96 112',
+  '<path d="M48 6 C 30 36, 14 56, 14 74 A 34 34 0 0 0 82 74 C 82 56, 66 36, 48 6 Z" fill="#7CC4E4" stroke="#D8F0FA" stroke-width="3"/><ellipse class="eye" cx="36" cy="72" rx="5" ry="5.5" fill="#15302B"/><ellipse class="eye" cx="60" cy="72" rx="5" ry="5.5" fill="#15302B"/><ellipse cx="28" cy="84" rx="5" ry="3" fill="#F4A6A0" opacity="0.8"/><ellipse cx="68" cy="84" rx="5" ry="3" fill="#F4A6A0" opacity="0.8"/><path d="M38 88 Q 48 97 58 88" fill="none" stroke="#15302B" stroke-width="3" stroke-linecap="round"/><ellipse cx="32" cy="50" rx="6" ry="10" fill="#D8F0FA"/>',
+);
+
+const PATH_BLOOM = '<path d="M0 22 V8" stroke="#5FB3A0" stroke-width="2.5"/><g fill="#F2A33A"><circle cx="0" cy="-4" r="5"/><circle cx="6" cy="1" r="5"/><circle cx="4" cy="8" r="5"/><circle cx="-4" cy="8" r="5"/><circle cx="-6" cy="1" r="5"/></g><circle cx="0" cy="3" r="3.5" fill="#F7F3EA"/>';
+const PATH_SPROUT = '<path d="M0 22 V10" stroke="#5FB3A0" stroke-width="2.5"/><g fill="#E9C46A"><circle cx="0" cy="0" r="4"/><circle cx="4.5" cy="4" r="4"/><circle cx="0" cy="8" r="4"/><circle cx="-4.5" cy="4" r="4"/></g><circle cx="0" cy="4" r="2.4" fill="#A9520F"/>';
+
+/** 小動畫：小水滴沿路走，花依序開 */
+export const welcomePath = `<div class="walk"><svg aria-hidden="true" width="300" height="52" viewBox="0 0 300 52"><path d="M0 44 H300" stroke="#5FB3A0" stroke-width="3" stroke-dasharray="8 6" stroke-linecap="round"/><g transform="translate(70 22)"><g class="bloom-in">${PATH_BLOOM}</g></g><g transform="translate(150 22)"><g class="bloom-in b2">${PATH_BLOOM}</g></g><g transform="translate(230 22)"><g class="bloom-in b3">${PATH_SPROUT}</g></g></svg><div class="walker"><svg class="hop" aria-hidden="true" width="24" height="28" viewBox="0 0 96 112"><path d="M48 6 C 30 36, 14 56, 14 74 A 34 34 0 0 0 82 74 C 82 56, 66 36, 48 6 Z" fill="#7CC4E4" stroke="#D8F0FA" stroke-width="6"/><circle cx="36" cy="72" r="7" fill="#15302B"/><circle cx="60" cy="72" r="7" fill="#15302B"/></svg></div></div>`;
+
+export const fruitIcon = `<svg aria-hidden="true" width="20" height="20" viewBox="0 0 44 44"><circle cx="22" cy="26" r="15" fill="#9BCB5A"/><path d="M22 11 C 26 4, 34 4, 36 8 C 30 10, 26 10, 22 11 Z" fill="#2F7D6D"/></svg>`;
 
 export const dropCalm = svg(
   '小水滴穩穩坐著', 150, 170, '0 0 160 180',

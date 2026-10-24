@@ -1,6 +1,6 @@
 # 原型二：遊戲版（小水滴澆站間）
 
-依階段二 wireframe（第二版；設計稿只留在本機 `wireframe/`，不進 git）重新實作的七個畫面，網址是 `play.html`。
+依階段二 wireframe（第三版；設計稿只留在本機 `wireframe/`，不進 git）重新實作的畫面（⓪ 歡迎頁＋七個畫面），網址是 `play.html`。
 線上版：<https://kevinphys.github.io/sunsunbus/play.html?simulate=1&speed=8>（推到 main 後由 GitHub Actions 自動部署）。
 感測、事件偵測、本機儲存、匯出都沿用研究用記錄器（`index.html`），遊戲版只多了「站間」與「果實」兩層。
 
@@ -10,9 +10,9 @@ web/src/game/                 遊戲規則純函式（附單元測試，不碰 D
   rules.ts                    參數型別；預設值在 shared/game.default.json
   segments.ts                 停靠偵測、站間切分、三級開花、TDX 站序解析
   ride.ts                     有效趟次、果實、探路果、路線水果
-  demo.ts                     示範行程（7 站、6 個站間），模擬模式與測試共用
+  demo.ts                     模擬行程（6 個站間）：沿真實站牌走（pickDemoStops），模擬模式與測試共用
 web/src/play/                 畫面
-  main.ts                     ① 上車 ② 搭乘中 ③ 下車 review ④ 果籃 ⑤ 換乘車金 ⑥ 司機端 ⑦ 市府儀表板
+  main.ts                     ⓪ 歡迎 ① 上車 ② 搭乘中 ③ 下車 review ④ 果籃 ⑤ 換乘車金 ⑥ 司機端 ⑦ 市府儀表板
   live.ts                     搭乘中：包住記錄器，即時切站間、偵測拿起手機、忘了按下車時自動結束
   ledger.ts                   果實帳本（localStorage，與搭乘資料分開）
 web/scripts/game-check.ts     用實測 CSV 檢查站間切分與等級
@@ -22,7 +22,8 @@ web/scripts/game-check.ts     用實測 CSV 檢查站間切分與等級
 
 ```bash
 cd web && npm run dev
-# 電腦上：https://localhost:5173/play.html?simulate=1&speed=8   （示範行程，8 倍速，約 40 秒跑完）
+# 電腦上：https://localhost:5173/play.html                       （⓪ 歡迎頁，按「先試玩」）
+#         https://localhost:5173/play.html?simulate=1&speed=8   （直接到上車畫面，8 倍速）
 # 手機上：https://<區網 IP>:5173/play.html?route=中山幹線&plate=KKA-1234&dir=0
 ```
 
@@ -30,7 +31,11 @@ cd web && npm run dev
   畫面顯示「從支架貼紙推測，你可能在搭」，按「對，是這班」（或點小水滴）就開始。iPhone 要求權限必須由點擊觸發，所以無法完全免點。
 - 上車站由 GPS 自動偵測（首頁先抓一次顯示，開始記錄後以第一筆 GPS 為準），**不用先選下車站**。
 - 下車時按「我下車了」，下車站取按下時 GPS 最近的站牌。
-- `simulate=1` 播放示範行程，`speed=N` 快轉（只影響模擬）。示範行程在終點站停 40 秒，到站後按「我下車了」。
+- 沒帶 `route` 時從 ⓪ 歡迎頁開始；碰貼紙、掃碼（帶 `route`）直接到 ① 上車。
+- 試玩模擬（`simulate=1`，歡迎頁與上車畫面的「試玩」連結是 `?simulate=1&speed=4#/go`，進來直接開始）：假裝在**中山幹線**（車牌 KKA-1234、往青年公園），
+  GPS 沿真實站牌走大同大學 → 臺北車站(忠孝) 的 6 個站間，站間距離照實際，切分用整條路線的站序，和真的搭車一樣。
+  開法依序是盛開、小花、盛開、乾土、盛開（中途拿起手機）、小花。`speed=N` 快轉（只影響模擬）；終點站停 40 秒，到站後按「我下車了」。
+  帶別的 `route` 也能模擬：挑該路線 7 個站距 250 至 700 m 的連續站（優先終點是「車站」的一段）；沒有站牌資料就用停靠推測。
 - 研究用記錄器首頁下方有「試玩遊戲版（原型二）」連結；兩邊共用同一個 IndexedDB，遊戲版的趟次也能在記錄器的「紀錄」裡匯出 CSV。
 
 ## 規則（實作版）

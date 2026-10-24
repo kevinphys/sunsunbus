@@ -1,9 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PARAMS } from '../core/params';
 import { processTrip } from '../core/trip';
 import type { GpsFix, TripEvent } from '../core/types';
 import { DEFAULT_RULES } from './rules';
-import { DEMO_EXPECTED_LEVELS, demoTrip } from './demo';
+import { DEMO_EXPECTED_LEVELS, demoTrip, pickDemoStops } from './demo';
 import { StableIndex, StopTracker, buildSegments, parseTdxStops, segmentLevel, segmentTrip, type RideSegment } from './segments';
 import { evaluateRide, routeFruit } from './ride';
 
@@ -104,6 +105,25 @@ describe('站間切分', () => {
     expect(segmentLevel([e('hard_brake', -1.6), e('hard_brake', -1.2), e('hard_accel', 1.7)], 1, DEFAULT_RULES).level).toBe('dry');
     expect(segmentLevel([e('hard_brake', -2.7)], 1, DEFAULT_RULES).level).toBe('dry');
     expect(segmentLevel([], 0.3, DEFAULT_RULES).level).toBe('unmeasured');
+  });
+});
+
+describe('模擬行程走真實站牌', () => {
+  const route = parseTdxStops(JSON.parse(readFileSync(new URL('../../public/stops/中山幹線.json', import.meta.url), 'utf8')), 0)!;
+  const picked = pickDemoStops(route.stops)!;
+  const sim = demoTrip(11, picked);
+  const res = processTrip(sim.trip, DEFAULT_PARAMS);
+
+  it('中山幹線挑到往臺北車站的 7 站', () => {
+    expect(picked.map((s) => s.name)).toEqual(['大同大學', '大同公司(晴光市場)', '台泥大樓(馬偕醫院)', '國賓飯店', '中山市場', '行政院', '臺北車站(忠孝)']);
+  });
+
+  it('用整條路線的站序切分：上下車站、站間與等級都對', () => {
+    const r = segmentTrip(res.samples, res.events, sim.trip.gps, route.stops, DEFAULT_RULES);
+    expect(r.boardStop).toBe('大同大學');
+    expect(r.alightStop).toBe('臺北車站(忠孝)');
+    expect(r.segments.map((s) => s.fromName)).toEqual(picked.slice(0, 6).map((s) => s.name));
+    expect(r.segments.map((s) => s.level)).toEqual([...DEMO_EXPECTED_LEVELS]);
   });
 });
 

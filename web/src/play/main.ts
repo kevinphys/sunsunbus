@@ -1,6 +1,7 @@
 // 順順行 遊戲版原型（原型二）：依 wireframe 的七個畫面重新實作，感測與事件偵測沿用記錄器。
 // ① 上車 → ② 搭乘中 → ③ 下車 review → ④ 我的果籃 → ⑤ 換乘車金；⑥ 司機端、⑦ 市府儀表板為展示畫面。
-// 網址：play.html?route=中山幹線&plate=KKA-1234&dir=0（支架 NFC 貼紙或 QR 帶入）；加 &simulate=1 播放示範行程。
+// ⓪ 歡迎頁是入口。網址：play.html?route=中山幹線&plate=KKA-1234&dir=0（支架 NFC 貼紙或 QR 帶入，直接到 ① 上車）；
+// 加 ?simulate=1 播放模擬行程（假裝在中山幹線上，GPS 沿真實站牌走）。
 import './play.css';
 import { registerSW } from 'virtual:pwa-register';
 import { SIMULATE, requestMotionPermission } from '../app/sensors';
@@ -9,7 +10,8 @@ import { getTrip, listTrips, requestPersistence, saveTrip, type Placement, type 
 import { DEFAULT_RULES } from '../game/rules';
 import { LEVEL_LABELS, nearestStop, parseTdxStops, type Level, type RideSegment, type Stop } from '../game/segments';
 import { routeFruit, type RideResult } from '../game/ride';
-import { demoTrip } from '../game/demo';
+import { demoTrip, pickDemoStops } from '../game/demo';
+import type { TripInput } from '../core/trip';
 import { LiveRide, type RideSetup } from './live';
 import { balance, collectedThisMonth, dayKey, loadLedger, saveLedger, streakDays } from './ledger';
 import * as art from './art';
@@ -46,10 +48,6 @@ const $ = <T extends HTMLElement = HTMLElement>(sel: string) => app.querySelecto
 /** 站序：web/public/stops/<路線>.json（TDX StopOfRoute 原始格式）。沒有檔案時改用停靠推測 */
 const stopCache = new Map<string, unknown>();
 async function loadStops(route: string, direction: number): Promise<{ stops: Stop[]; headsign: string } | null> {
-  if (SIMULATE && route === DEMO_ROUTE) {
-    const s = demo().stops;
-    return { stops: s, headsign: s[s.length - 1].name };
-  }
   if (!stopCache.has(route)) {
     try {
       const res = await fetch(`${import.meta.env.BASE_URL}stops/${encodeURIComponent(route)}.json`);
@@ -61,9 +59,40 @@ async function loadStops(route: string, direction: number): Promise<{ stops: Sto
   return parseTdxStops(stopCache.get(route), direction);
 }
 
-const DEMO_ROUTE = '示範路線';
-let demoCache: ReturnType<typeof demoTrip> | null = null;
-const demo = () => (demoCache ??= demoTrip());
+// ---------- ⓪ 歡迎 ----------
+
+/** 試玩模擬的網址：假裝在中山幹線上，4 倍速，進來直接開始 */
+const SIM_HREF = '?simulate=1&speed=4#/go';
+
+const STEPS = [
+  { bg: 'var(--drop)', title: '上車，把手機放上支架', body: '小水滴跳上車，自動記下你在哪一站上車。' },
+  { bg: 'var(--bloom)', title: '沿路澆水', body: '開得順就開花，太晃的那段會留下乾土。' },
+  { bg: '#9bcb5a', title: `下車按一下，採 1 顆果實`, body: `每趟都有，${rules.ride.fruitsPerReward} 顆換 ${rules.ride.rewardNtd} 元乘車金。` },
+];
+
+function welcomeView() {
+  // 模擬模式下按「我在公車上」回到真的上車畫面
+  const board = SIMULATE ? `${location.pathname}#/board` : '#/board';
+  render(`
+    <section class="screen welcome">
+      <div class="hero">
+        <p class="tagline">公車順順行 Sunsunbus · 開順，不開快</p>
+        <div class="hero-drop">${art.welcomeSparkles}<div class="bob">${art.dropHero}</div><p class="hi-bubble">嗨，我就是你！</p></div>
+        <h1 class="hero-title">你就是這顆<span>小水滴</span></h1>
+        <p class="hero-sub">坐上公車，你會沿路替每個站間澆水。<br>車開得順，花就開了。</p>
+        ${art.welcomePath}
+      </div>
+      <p class="section-b">小水滴的一趟車</p>
+      <ol class="steps">
+        ${STEPS.map((st, i) => `<li class="step in${i + 1}"><span class="num" style="background:${st.bg}">${i + 1}</span><div><p class="step-title">${st.title}</p><p class="small">${st.body}</p></div></li>`).join('')}
+      </ol>
+      <p class="small"><b>隱私：</b>只記錄「哪兩站之間順不順」，不記錄你是誰，也不用來處罰司機。</p>
+      <div class="grow"></div>
+      <a class="cta" href="${board}">我在公車上，當一顆小水滴</a>
+      <a class="cta ghost" href="${SIM_HREF}">先試玩：模擬搭一趟（不用在車上）</a>
+    </section>
+  `);
+}
 
 // ---------- ① 上車 ----------
 
@@ -75,16 +104,17 @@ interface Pending {
 }
 
 type Prefs = { seatRow: SeatRow; posture: Posture; placement: Placement };
-const SEAT: [SeatRow, string][] = [['front', '前排'], ['middle', '中段'], ['rear', '後排']];
-const POSTURE: [Posture, string][] = [['sit', '坐'], ['stand', '站']];
-const PLACE: [Placement, string][] = [['mount', '支架'], ['seat', '座椅']];
+const SEAT: [SeatRow, string][] = [['middle', '車廂中段'], ['front', '前段'], ['rear', '後段']];
+const POSTURE: [Posture, string][] = [['sit', '坐著'], ['stand', '站著']];
+const PLACE: [Placement, string][] = [['mount', '支架'], ['seat', '平放座椅']];
 const ROUTE_SUGGESTIONS = ['中山幹線', '信義幹線', '敦化幹線', '民生幹線', '南京幹線', '307', '262', '656'];
+/** 試玩模擬假裝在搭的這班車（站牌是真的，見 pickDemoStops） */
+const SIM_PENDING: Pending = { route: '中山幹線', plate: 'KKA-1234', direction: 0, fromSticker: true };
 
 function stickerFromUrl(): Pending | null {
   const q = new URLSearchParams(location.search);
-  if (SIMULATE && !q.get('route')) return { route: DEMO_ROUTE, plate: 'DEMO-001', direction: 0, fromSticker: true };
   const route = q.get('route')?.trim();
-  if (!route) return null;
+  if (!route) return SIMULATE ? SIM_PENDING : null;
   return { route, plate: q.get('plate')?.trim() ?? '', direction: Number(q.get('dir') ?? 0) === 1 ? 1 : 0, fromSticker: true };
 }
 
@@ -97,25 +127,33 @@ function loadPrefs(): Prefs {
   };
 }
 
-function homeView(pending: Pending | null = stickerFromUrl(), manual = false) {
+function savePref(k: keyof Prefs, v: string) {
+  saveLastSetup({ ...loadLastSetup<Prefs>(), ...loadPrefs(), [k]: v });
+}
+
+function homeView(pending: Pending | null = stickerFromUrl(), manual = false, opts: { autostart?: boolean; prefsOpen?: boolean } = {}) {
   const prefs = loadPrefs();
   const n = balance(loadLedger());
   const label = (list: [string, string][], v: string) => list.find(([k]) => k === v)?.[1] ?? '';
   const chips = (name: keyof Prefs, list: [string, string][]) =>
     list.map(([k, l]) => `<button class="chip" data-pref="${name}" data-v="${k}" aria-pressed="${prefs[name] === k}">${l}</button>`).join('');
+  const ready = !!pending && !manual;
 
-  const card = pending && !manual
-    ? `<div class="card">
-        <p class="muted">${pending.fromSticker ? '從支架貼紙推測，你可能在搭' : '你要搭'}</p>
-        <p style="font-size:24px;font-weight:900" id="route-title">${esc(pending.route)}</p>
-        <p class="muted" id="plate-line">${pending.plate ? `車牌 ${esc(pending.plate)}` : ''}</p>
+  const card = ready
+    ? `<div class="card route-card">
+        <p class="muted" id="source">${pending.fromSticker ? '你搭的是這班嗎？（依支架貼紙與 GPS 判斷）' : '你搭的是這班嗎？'}</p>
+        <div class="route-line"><p class="route-name">${esc(pending.route)}</p><p class="headsign" id="headsign"></p></div>
+        <div class="chips">
+          <span class="route-tag teal" id="board-chip" hidden>上車站：<b id="board">偵測中…</b></span>
+          ${pending.plate ? `<span class="route-tag">車牌 ${esc(pending.plate)}</span>` : ''}
+        </div>
         <div id="stop-extra"></div>
-        <div class="btns">
-          <button class="btn" id="confirm">對，是這班</button>
-          <button class="btn ghost" id="other">不是，換一班</button>
+        <div class="btns" id="confirm-btns">
+          <button class="btn" id="confirm">對，就是這班</button>
+          <button class="btn ghost" id="other">不是，重新選</button>
         </div>
       </div>`
-    : `<div class="card">
+    : `<div class="card route-card">
         <label class="field">路線<input id="route" list="routes" placeholder="例：中山幹線" value="${esc(pending?.route ?? '')}" autocomplete="off"></label>
         <datalist id="routes">${ROUTE_SUGGESTIONS.map((r) => `<option value="${r}">`).join('')}</datalist>
         <label class="field">車牌（選填）<input id="plate" placeholder="例：KKA-1234" value="${esc(pending?.plate ?? '')}" autocomplete="off"></label>
@@ -125,42 +163,39 @@ function homeView(pending: Pending | null = stickerFromUrl(), manual = false) {
   render(`
     <section class="screen">
       <div class="row">
-        <p class="brand">公車順順行</p>
-        <a class="pill" href="#/garden">我的果籃 · ${n} 顆</a>
+        <div class="stack"><p class="brand">公車順順行</p><a class="howto" href="#/welcome">怎麼玩？</a></div>
+        <a class="pill basket" href="#/garden">${art.fruitIcon}果籃 <span class="num">${n} / ${rules.ride.fruitsPerReward}</span></a>
       </div>
-      ${SIMULATE ? '<p class="small">模擬模式：播放 5 分鐘的示範行程（7 站），到終點站後按「我下車了」。不讀取真實感測器。</p>' : ''}
+      ${SIMULATE ? '<p class="small" id="sim-note">試玩模擬：假裝在這班車上，沿真實站牌開 6 個站間，到站後按「我下車了」。不讀取真實感測器。</p>' : ''}
       ${card}
-      <button class="tap ${pending && !manual ? 'ready' : ''}" id="tap" ${pending && !manual ? '' : 'disabled'}>
-        <div class="tap-circle">${art.dropReady}<p>${pending && !manual ? '點一下開始' : '放上支架，碰一下'}</p></div>
-        <p class="body center">${pending && !manual ? '確認路線就開始，<br>不用先選下車站，下車時點一下就好。' : '碰支架貼紙或掃 QR 就會帶入路線，<br>不用先選下車站，下車時點一下就好。'}</p>
+      <button class="tap ${ready ? 'ready' : ''}" id="tap" ${ready ? '' : 'disabled'}>
+        <div class="tap-circle"><div class="ring"></div><div class="bob">${art.dropReady}</div><p>${ready ? '小水滴，跳上支架吧' : '先確認路線'}</p></div>
+        <p class="body center">${ready ? '碰到支架就開始澆水。<br>不用選下車站，到站時按「我下車了」。' : '碰支架貼紙或掃 QR 會自動帶入路線。<br>不用選下車站，到站時按「我下車了」。'}</p>
       </button>
-      <div class="card" style="padding:12px 14px;gap:8px;border-width:1px">
-        <div class="row">
-          <p style="font-size:14px">上次設定：<b>${label(SEAT, prefs.seatRow)} · ${label(POSTURE, prefs.posture)} · ${label(PLACE, prefs.placement)}</b></p>
-          <button class="chip" id="toggle-prefs" style="font-weight:700;border-color:var(--ink)">修改</button>
-        </div>
-        <div class="chips" id="prefs" hidden>${chips('seatRow', SEAT)}${chips('posture', POSTURE)}${chips('placement', PLACE)}</div>
+      <div class="prefs-bar">
+        <p>我的位置：<b>${label(SEAT, prefs.seatRow)} · ${label(POSTURE, prefs.posture)} · ${label(PLACE, prefs.placement)}</b></p>
+        <button class="chip edit" id="toggle-prefs">${opts.prefsOpen ? '完成' : '修改'}</button>
       </div>
-      ${pending && !manual ? '' : '<button class="link" id="manual">沒有支架？手動選路線</button>'}
-      <p class="small center">量測時螢幕需保持亮著，支架會幫你充電。<br><a href="./">研究用記錄器</a></p>
+      <div class="chips" id="prefs" ${opts.prefsOpen ? '' : 'hidden'}>${chips('seatRow', SEAT)}${chips('posture', POSTURE)}${chips('placement', PLACE)}</div>
+      <div class="links">
+        <button class="link" id="seat-go">沒有支架？平放座椅開始</button>
+        <a class="link sim" href="${SIM_HREF}">試玩模擬</a>
+      </div>
+      <p class="small center">量測時螢幕會保持亮著，支架會幫手機充電。<br><a href="./">研究用記錄器</a></p>
     </section>
   `);
 
   $('#toggle-prefs').onclick = () => {
     const el = $('#prefs');
     el.hidden = !el.hidden;
-    $('#toggle-prefs').textContent = el.hidden ? '修改' : '收合';
+    $('#toggle-prefs').textContent = el.hidden ? '修改' : '完成';
   };
   app.querySelectorAll<HTMLButtonElement>('[data-pref]').forEach((b) => {
     b.onclick = () => {
-      const k = b.dataset.pref as keyof Prefs;
-      saveLastSetup({ ...loadLastSetup<Prefs>(), ...prefs, [k]: b.dataset.v });
-      homeView(pending, manual);
-      $('#prefs').hidden = false;
-      $('#toggle-prefs').textContent = '收合';
+      savePref(b.dataset.pref as keyof Prefs, b.dataset.v!);
+      homeView(pending, manual, { prefsOpen: true });
     };
   });
-  app.querySelector<HTMLButtonElement>('#manual')?.addEventListener('click', () => homeView(pending, true));
   app.querySelector<HTMLButtonElement>('#other')?.addEventListener('click', () => homeView({ route: '', plate: '', direction: 0, fromSticker: false }, true));
   app.querySelector<HTMLButtonElement>('#manual-go')?.addEventListener('click', () => {
     const route = $<HTMLInputElement>('#route').value.trim();
@@ -168,9 +203,16 @@ function homeView(pending: Pending | null = stickerFromUrl(), manual = false) {
     homeView({ route, plate: $<HTMLInputElement>('#plate').value.trim(), direction: 0, fromSticker: false });
   });
 
-  if (!pending || manual) return;
+  if (!ready) {
+    $('#seat-go').onclick = () => {
+      savePref('placement', 'seat');
+      toast('已改成平放座椅，確認路線後就能開始');
+      homeView(pending, manual);
+    };
+    return;
+  }
   let stopInfo: Awaited<ReturnType<typeof loadStops>> = null;
-  const showStops = async () => {
+  const stopsReady = (async () => {
     stopInfo = await loadStops(pending.route, pending.direction);
     const extra = app.querySelector('#stop-extra');
     if (!extra) return;
@@ -178,31 +220,44 @@ function homeView(pending: Pending | null = stickerFromUrl(), manual = false) {
       extra.innerHTML = '<p class="small">這條路線還沒有站牌資料，站間會用停靠位置推測。</p>';
       return;
     }
-    $('#route-title').textContent = `${pending.route} · 往 ${stopInfo.headsign}`;
-    const plateLine = $('#plate-line');
-    plateLine.innerHTML = `${pending.plate ? `車牌 ${esc(pending.plate)} · ` : ''}上車站 <b id="board" style="color:var(--ink)">偵測中…</b>（GPS 偵測）`;
-    extra.innerHTML = '<button class="link" id="flip" style="text-align:left;padding:0">方向不對？換成另一個方向</button>';
+    $('#headsign').textContent = `往 ${stopInfo.headsign}`;
+    $('#board-chip').hidden = false;
+    extra.innerHTML = '<button class="link" id="flip" style="text-align:left;padding:0;font-size:13px">方向不對？換成另一個方向</button>';
     $('#flip').onclick = () => homeView({ ...pending, direction: 1 - pending.direction });
     const board = await detectBoardStop(stopInfo.stops);
     const el = app.querySelector('#board');
     if (el) el.textContent = board ?? '開始後偵測';
-  };
-  void showStops();
+  })();
 
-  const go = () => {
+  const go = (placement?: Placement) => {
+    if (placement) savePref('placement', placement);
     const p = loadPrefs();
     void startRide(
       { route: pending.route, plate: pending.plate, seatRow: p.seatRow, seatSide: '', posture: p.posture, placement: p.placement, testMode: false, direction: pending.direction },
       stopInfo?.stops ?? null,
     );
   };
-  $('#confirm').onclick = go;
-  $('#tap').onclick = go;
+  $('#confirm').onclick = () => {
+    $('#confirm-btns').hidden = true;
+    const src = $('#source');
+    src.textContent = '✓ 已確認路線與方向';
+    src.classList.add('ok');
+  };
+  $('#tap').onclick = () => go();
+  $('#seat-go').onclick = () => go('seat');
+  if (opts.autostart) void stopsReady.then(() => go());
+}
+
+/** 模擬模式要播放的行程：沿這條路線挑出的 7 個真實站牌；路線沒有站牌資料（或站距都不合適）就用停靠推測 */
+function simFor(stops: Stop[] | null): { trip: TripInput; stops: Stop[] | null; board: string | null } {
+  const picked = stops && pickDemoStops(stops);
+  const d = demoTrip(11, picked ?? undefined);
+  return { trip: d.trip, stops: picked ? stops : null, board: picked ? picked[0].name : null };
 }
 
 /** 首頁先抓一次 GPS，顯示偵測到的上車站（正式判定在開始記錄後的第一筆 GPS） */
 function detectBoardStop(stops: Stop[]): Promise<string | null> {
-  if (SIMULATE) return Promise.resolve(stops[0]?.name ?? null);
+  if (SIMULATE) return Promise.resolve(simFor(stops).board);
   return new Promise((resolve) => {
     if (!('geolocation' in navigator)) return resolve(null);
     navigator.geolocation.getCurrentPosition(
@@ -221,7 +276,8 @@ async function startRide(setup: RideSetup, stops: Stop[] | null) {
   const perm = await requestMotionPermission();
   if (!perm.motion) return toast('沒有取得動作感測權限。iPhone 請在 Safari 設定中允許「動作與方向」。');
   void requestPersistence();
-  ride = new LiveRide(setup, loadParams(), rules, stops, SIMULATE && setup.route === DEMO_ROUTE ? demo().trip : undefined);
+  const sim = SIMULATE ? simFor(stops) : null;
+  ride = new LiveRide(setup, loadParams(), rules, sim ? sim.stops : stops, sim?.trip);
   await ride.start();
   location.hash = '#/ride';
 }
@@ -375,7 +431,7 @@ async function reviewView(id: string) {
       ${fruit}
       <div id="thanks">${thanked ? '<p class="done-msg">已送出謝謝</p>' : '<button class="btn big" id="thank" style="width:100%">謝謝司機，辛苦了</button>'}</div>
       <p class="small center">謝謝是鼓勵，不計入獎金；司機的平穩獎金只看開花率。</p>
-      <div class="btns"><a class="link" href="#/garden">看我的果籃</a><a class="link" href="#/">回首頁</a></div>
+      <div class="btns"><a class="link" href="#/garden">看我的果籃</a><a class="link" href="#/board">回首頁</a></div>
     </section>
   `);
   app.querySelector<HTMLButtonElement>('#thank')?.addEventListener('click', async () => {
@@ -417,7 +473,7 @@ async function gardenView() {
 
   render(`
     <section class="screen">
-      <div class="row"><h1 class="title">我的果籃</h1><a href="#/" style="font-weight:700;text-decoration:none">首頁</a></div>
+      <div class="row"><h1 class="title">我的果籃</h1><a href="#/board" style="font-weight:700;text-decoration:none">首頁</a></div>
       <div class="card dark">
         <p class="muted">目前果實（本月採集 ${collectedThisMonth(l)} 顆）</p>
         <p class="num big-num">${n} / ${goal} 顆</p>
@@ -628,8 +684,18 @@ function route() {
       return void driverView();
     case 'city':
       return void cityView();
-    default:
+    case 'welcome':
+      return welcomeView();
+    case 'board':
       return homeView();
+    case 'go':
+      // 試玩模擬：直接上車開始
+      if (!SIMULATE) return location.replace(SIM_HREF);
+      history.replaceState(null, '', '#/board');
+      return homeView(SIM_PENDING, false, { autostart: true });
+    default:
+      // 碰貼紙或掃碼進來直接到上車畫面，其他從歡迎頁開始
+      return stickerFromUrl() ? homeView() : welcomeView();
   }
 }
 

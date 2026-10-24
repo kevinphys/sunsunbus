@@ -35,6 +35,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png}'],
+        // 網址參數（?route=…&simulate=1）不影響是哪一頁；不忽略的話 play.html?route=… 會對不到快取，被導回 index.html
+        ignoreURLParametersMatching: [/.*/],
       },
     }),
   ],
