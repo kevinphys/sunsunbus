@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "fixtures": "vite-node scripts/gen-fixtures.ts",
     "qr": "node scripts/qr.mjs",
-    "icons": "node scripts/make-icons.mjs"
+    "icons": "node scripts/make-icons.mjs",
+    "stops": "node scripts/fetch-stops.mjs"
   },
   "dependencies": {
     "idb": "^8.0.3",
