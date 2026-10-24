@@ -14,3 +14,6 @@ server/*.db
 
 # 任務書只留在本機，不進 git
 sunsunbus-claude-code-任務書.md
+
+# 設計稿（wireframe）只留在本機，不進 git
+wireframe/

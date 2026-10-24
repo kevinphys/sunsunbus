@@ -3,6 +3,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Params } from '../core/params';
 import type { GpsFix, MotionSample, OrientationSample, SegmentInfo, TripEvent, TripSummary } from '../core/types';
+import type { RideResult } from '../game/ride';
 
 export type SeatRow = 'front' | 'middle' | 'rear';
 export type SeatSide = 'window' | 'aisle';
@@ -42,6 +43,10 @@ export interface TripMeta {
   segments?: SegmentInfo[];
   accelSign?: 1 | -1;
   uploadedAt?: number;
+  /** 遊戲版（play.html）的這趟結果：站間、開花等級、果實 */
+  ride?: RideResult;
+  /** 遊戲版：行駛方向（TDX Direction） */
+  direction?: number;
 }
 
 export interface Chunk {

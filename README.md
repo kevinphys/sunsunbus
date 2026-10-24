@@ -9,6 +9,10 @@
 
 實測流程見 [`docs/field-test-plan.md`](docs/field-test-plan.md)。
 
+**原型二（遊戲版）**：`play.html`，乘客是小水滴，每個站間依平穩度開花（盛開、小花、乾土），有效的一趟採 1 顆果實。
+規則、試玩方式與實測校正見 [`docs/prototype2.md`](docs/prototype2.md)。
+線上試玩：<https://kevinphys.github.io/sunsunbus/play.html?simulate=1&speed=8>（研究用記錄器：<https://kevinphys.github.io/sunsunbus/>）
+
 ## 功能
 
 **手機網頁（`web/`）**
@@ -31,9 +35,12 @@
 
 ```
 shared/params.default.json   演算法參數（前端與 Python 共用，調參改這裡）
+shared/game.default.json     遊戲版規則參數（站間、開花、果實）
 web/                         手機網頁 PWA（Vite + TypeScript，無框架）
   src/core/                  感測處理純函式模組（與 UI 分離，附單元測試）
   src/app/                   UI：記錄、即時圖表、摘要、匯出、設定
+  src/game/                  遊戲版規則純函式（站間切分、開花、果實，附單元測試）
+  src/play/                  遊戲版畫面（play.html）
   scripts/                   對照資料產生、QR code、圖示
 analysis/                    Python 分析工具（uv 專案）
   sunsunbus/core.py          演算法的 Python 移植
@@ -162,3 +169,8 @@ GPS dv/dt ─────────────▶ 前進方向估計（GPS �
 | 17 | 本機開發用 `@vitejs/plugin-basic-ssl` 自簽憑證，不強制 mkcert | 不用安裝額外工具；手機接受一次警告即可 |
 | 18 | Python 演算法是移植而不是共用程式碼 | 分析工具要能讀大量資料、調參、畫圖；用一致性測試（`npm run fixtures` + `pytest`）保證結果相同 |
 | 19 | 後端與分析統計都採「未滿 10 趟不公開」 | 任務書隱私原則 |
+| 20 | 遊戲版做成同一個 PWA 的第二個頁面（`play.html`），不另開專案 | 直接沿用感測、事件偵測、儲存與匯出；研究用記錄器保留給實測 |
+| 21 | 遊戲規則參數另放 `shared/game.default.json` | 調開花門檻不影響事件偵測，也不影響 TS／Python 一致性測試 |
+| 22 | 沒有站牌資料時用「停車 ≥ 5 秒」推測停靠 | TDX 金鑰不能放前端；先讓任何路線都能玩，紅燈被算成停靠是已知限制 |
+| 23 | 高加加速度事件不計入開花（點數 0） | 第一趟實測（656 後排）大多是等速行駛的路面顛簸；計入時 8 段有 6 段乾土，其中一段 2.2 km 沒有任何急煞 |
+| 24 | 上車站用 GPS 自動偵測，不要求先選下車站；下車改由乘客按「我下車了」 | wireframe 第二版：大多數人上車不會想設定下車站；自動結束（10 分鐘）只當忘了按的保護，結束點取最後一個穩定量測的站 |

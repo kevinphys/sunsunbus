@@ -7,6 +7,10 @@ const base = process.env.BASE_PATH ?? '/';
 
 export default defineConfig({
   base,
+  build: {
+    // 兩個頁面：研究用記錄器（index.html）與遊戲版原型（play.html）
+    rollupOptions: { input: { main: 'index.html', play: 'play.html' } },
+  },
   plugins: [
     // 手機的 DeviceMotion 需要 HTTPS（secure context），開發時用自簽憑證
     basicSsl(),

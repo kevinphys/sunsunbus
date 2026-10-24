@@ -86,6 +86,7 @@ function homeView() {
       <button id="settings" class="secondary">⚙️ 設定</button>
       <button id="share" class="secondary">🔗 QR code</button>
     </nav>
+    <p class="hint"><a href="play.html${SIMULATE ? '?simulate=1' : ''}">試玩遊戲版（原型二）</a></p>
   `);
 
   const form = document.querySelector<HTMLFormElement>('#setup')!;

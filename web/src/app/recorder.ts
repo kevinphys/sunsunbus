@@ -2,7 +2,7 @@
 import type { Params } from '../core/params';
 import { mergeParams } from '../core/params';
 import { LiveProcessor } from '../core/live';
-import { processTrip } from '../core/trip';
+import { processTrip, type TripInput, type TripResult } from '../core/trip';
 import type { GpsFix, MotionSample, OrientationSample, ProcessedSample, TripEvent } from '../core/types';
 import { appendChunk, loadRaw, saveTrip, type Marker, type TripMeta } from './storage';
 import { WakeLock, startSensors } from './sensors';
@@ -53,6 +53,8 @@ export class Recorder {
     setup: TripSetup,
     params: Params,
     private listener: RecorderListener = {},
+    /** 模擬模式（?simulate=1）要播放的行程 */
+    private simTrip?: TripInput,
   ) {
     const effective = setup.testMode ? testModeParams(params) : params;
     this.meta = {
@@ -92,7 +94,7 @@ export class Recorder {
         this.listener.onGps?.(g);
       },
       onGpsError: (msg) => this.listener.onGpsError?.(msg),
-    });
+    }, this.simTrip);
     this.wakeLockOk = await this.wake.start();
     this.timer = window.setInterval(() => this.flush(), FLUSH_MS);
     document.addEventListener('visibilitychange', this.onVisibility);
@@ -128,8 +130,8 @@ export class Recorder {
     return this.flushing;
   }
 
-  /** 結束記錄：停止感測器、寫入剩餘資料、用整趟資料重新批次處理 */
-  async stop(): Promise<TripMeta> {
+  /** 結束記錄：停止感測器、寫入剩餘資料、用整趟資料重新批次處理。extend 可在存檔前加上其他結果（遊戲版用） */
+  async stop(extend?: FinalizeHook): Promise<TripMeta> {
     this.stopSensors?.();
     window.clearInterval(this.timer);
     document.removeEventListener('visibilitychange', this.onVisibility);
@@ -137,12 +139,14 @@ export class Recorder {
     this.live.finish();
     this.meta.endedAt = Date.now();
     await this.flush();
-    return finalizeTrip(this.meta);
+    return finalizeTrip(this.meta, extend);
   }
 }
 
+export type FinalizeHook = (meta: TripMeta, result: TripResult, raw: TripInput) => void;
+
 /** 由本機原始資料重新計算摘要（結束時用，也可以對中斷的趟次補做） */
-export async function finalizeTrip(meta: TripMeta): Promise<TripMeta> {
+export async function finalizeTrip(meta: TripMeta, extend?: FinalizeHook): Promise<TripMeta> {
   const raw = await loadRaw(meta.id);
   const r = processTrip(raw, meta.params);
   meta.status = 'done';
@@ -151,6 +155,7 @@ export async function finalizeTrip(meta: TripMeta): Promise<TripMeta> {
   meta.events = r.events;
   meta.segments = r.segments;
   meta.accelSign = r.accelSign;
+  extend?.(meta, r, raw);
   await saveTrip(meta);
   return meta;
 }

@@ -1,0 +1,44 @@
+{
+  "segment": {
+    "stopRadiusM": 35,
+    "dwellSpeedMs": 1.0,
+    "dwellMinSec": 5,
+    "minSegmentM": 150,
+    "minSegmentStableRatio": 0.6,
+    "maxJumpSpeedMs": 40,
+    "maxAccuracyM": 50,
+    "boardRadiusM": 100
+  },
+  "level": {
+    "weights": {
+      "hard_brake": 1.0,
+      "hard_accel": 1.0,
+      "sharp_turn": 1.0,
+      "high_jerk": 0.0
+    },
+    "severe": {
+      "hard_brake": 2.5,
+      "hard_accel": 2.2,
+      "sharp_turn": 2.5,
+      "high_jerk": 1000000000.0
+    },
+    "sproutMaxPoints": 2.0,
+    "penaltyPerPoint": 25
+  },
+  "ride": {
+    "minSegments": 3,
+    "minStableRatio": 0.5,
+    "dailyCap": 4,
+    "scoutDryShare": 0.5,
+    "thirstMultiplier": 2,
+    "fruitsPerReward": 20,
+    "rewardNtd": 15
+  },
+  "riding": {
+    "liftedAfterSec": 2,
+    "autoEndUnstableSec": 600,
+    "offRouteM": 300,
+    "offRouteSec": 60,
+    "alightRadiusM": 150
+  }
+}

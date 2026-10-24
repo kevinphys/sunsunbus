@@ -1,9 +1,12 @@
 // 瀏覽器感測器：權限、devicemotion、deviceorientation、定位、螢幕常亮。
 import type { GpsFix, MotionSample, OrientationSample } from '../core/types';
 import { generateTrip, pulse } from '../core/synthetic';
+import type { TripInput } from '../core/trip';
 
 /** 網址加上 ?simulate=1 時，用合成的公車行程取代真實感測器（電腦上測試、展示用） */
 export const SIMULATE = new URLSearchParams(location.search).has('simulate');
+/** 模擬模式的播放倍速（?speed=10 快轉，展示與測試用） */
+const SIM_SPEED = Math.max(1, Number(new URLSearchParams(location.search).get('speed')) || 1);
 
 type PermissionFn = () => Promise<'granted' | 'denied'>;
 
@@ -34,9 +37,9 @@ export interface SensorHandlers {
   onGpsError: (msg: string) => void;
 }
 
-/** 開始監聽感測器，回傳停止函式 */
-export function startSensors(h: SensorHandlers): () => void {
-  if (SIMULATE) return startSimulation(h);
+/** 開始監聽感測器，回傳停止函式。模擬模式可指定要播放的行程（預設為 3 分鐘的示範行程） */
+export function startSensors(h: SensorHandlers, simTrip?: TripInput): () => void {
+  if (SIMULATE) return startSimulation(h, simTrip);
   const onMotion = (e: DeviceMotionEvent) => {
     const g = e.accelerationIncludingGravity;
     if (!g || g.x === null || g.y === null || g.z === null) return;
@@ -122,24 +125,26 @@ export class WakeLock {
   }
 }
 
-/**
- * 模擬一段 3 分鐘、循環播放的公車行程：起步、等速、急煞、轉彎、靠站。
- * 時間戳換成現在的時間，以真實速度送進同一套處理流程。
- */
-function startSimulation(h: SensorHandlers): () => void {
-  const period = 180;
+function defaultSimTrip(): TripInput {
   const aLong = (t: number) =>
     pulse(t, 6, 8, 1.1) + pulse(t, 40, 1.5, -2.4, 0.2) + pulse(t, 48, 5, 1.0) + pulse(t, 75, 3, 1.8) +
     pulse(t, 100, 4, -1.4) + pulse(t, 120, 6, 1.0) + pulse(t, 150, 9, -1.0);
   const aLat = (t: number) => pulse(t, 85, 4, 1.9) + pulse(t, 135, 3, -1.2);
-  const trip = generateTrip({ durationSec: period, aLong, aLat, mount: { yawDeg: 15, tiltDeg: 80 }, seed: 7 });
+  return generateTrip({ durationSec: 180, aLong, aLat, mount: { yawDeg: 15, tiltDeg: 80 }, seed: 7 });
+}
+
+/**
+ * 循環播放一段模擬行程（預設 3 分鐘：起步、等速、急煞、轉彎、靠站）。
+ * 時間戳換成現在的時間，以真實速度（或 ?speed= 指定的倍速）送進同一套處理流程。
+ */
+function startSimulation(h: SensorHandlers, trip = defaultSimTrip()): () => void {
   const tripStart = trip.motion[0].t;
+  const period = (trip.motion[trip.motion.length - 1].t - tripStart) / 1000 + 1 / 60;
   const t0 = Date.now();
   let mi = 0, oi = 0, gi = 0, loop = 0;
   const timer = window.setInterval(() => {
-    const now = Date.now();
     const shift = t0 - tripStart + loop * period * 1000;
-    const until = now - shift;
+    const until = t0 + (Date.now() - t0) * SIM_SPEED - shift;
     while (mi < trip.motion.length && trip.motion[mi].t <= until) h.onMotion({ ...trip.motion[mi], t: trip.motion[mi++].t + shift });
     while (oi < trip.orientation.length && trip.orientation[oi].t <= until) h.onOrientation({ ...trip.orientation[oi], t: trip.orientation[oi++].t + shift });
     while (gi < trip.gps.length && trip.gps[gi].t <= until) h.onGps({ ...trip.gps[gi], t: trip.gps[gi++].t + shift });
