@@ -303,7 +303,13 @@ function ridingView() {
         <p class="muted" style="color:var(--night-ink)">${esc(r.setup.route)}</p>
       </div>
       <p class="muted" style="color:var(--night-ink);font-size:15px" id="next"></p>
-      <div class="stage" id="stage"></div>
+      <div class="stage" id="stage">
+        <div class="drop" id="drop"></div>
+        <p class="caption" id="cap"></p>
+        <p class="sub" id="sub"></p>
+        <div class="slots" id="slots"></div>
+        <div class="legend" id="legend">${(['bloom', 'sprout', 'dry'] as const).map((l) => `<span>${art.levelIcon(l, 16)}${LEVEL_LABELS[l]}</span>`).join('')}</div>
+      </div>
       <button class="btn big" id="stop" style="font-size:20px;border-radius:999px;padding:16px">我下車了</button>
       <p class="small center" style="color:var(--night-ink)">${r.stops ? '下車站以按下時的 GPS 位置判定。' : ''}忘了按？${r.stops ? '離開路線或' : ''}手機離開支架 ${Math.round(rules.riding.autoEndUnstableSec / 60)} 分鐘會自動結束。<span id="wake"></span></p>
     </section>
@@ -315,6 +321,13 @@ function ridingView() {
   let splashUntil = 0;
   let shakes = 0;
   let stopping = false;
+  let shownMode = '';
+  let slotKey = '';
+  let slotClosed = 0;
+  const setText = (sel: string, t: string) => {
+    const el = $(sel);
+    if (el.textContent !== t) el.textContent = t;
+  };
 
   const finish = async (autoEnded?: Parameters<LiveRide['stop']>[0]) => {
     if (stopping) return;
@@ -354,24 +367,34 @@ function ridingView() {
     $('#next').textContent = v.boardStop ? `${v.boardStop} 上車 · ${where}` : where;
     $('#wake').textContent = r.recorder.wakeLockOk ? '' : ' 這支手機無法保持螢幕常亮，請先關閉自動鎖定。';
 
-    const stage = $('#stage');
+    // 只換有變的部分：整塊重畫會讓動畫每 0.5 秒從頭播
+    const splash = now < splashUntil;
+    const mode = v.lifted ? 'lifted' : splash ? 'splash' : 'calm';
+    if (mode !== shownMode) {
+      shownMode = mode;
+      $('#stage').className = `stage ${mode}`;
+      $('#drop').innerHTML = mode === 'lifted' ? art.dropSearching : mode === 'splash' ? art.dropSplash : art.dropCalm + art.drips;
+      $('#slots').hidden = $('#legend').hidden = mode === 'lifted';
+    }
     if (v.lifted) {
-      stage.className = 'stage lifted';
-      stage.innerHTML = `${art.dropSearching}<p class="caption">小水滴在找支架</p><p class="sub">手機拿在手上時暫停澆水。<br>放回支架或座椅就會自動繼續。</p>`;
+      setText('#cap', '小水滴在找支架');
+      $('#sub').innerHTML = '手機拿在手上時暫停澆水。<br>放回支架或座椅就會自動繼續。';
       return;
     }
-    const splash = now < splashUntil;
-    const text = now < captionUntil ? caption : v.dwelling ? '靠站中，停靠時間不計分' : v.segments.length ? '穩穩澆水中' : '開始澆水';
-    const open = v.segments.find((s) => s.open);
-    const slots =
-      v.segments
-        .filter((s) => !s.open)
-        .slice(-SLOT_SHOWN)
-        .map((s) => `<div class="slot lv-${s.level}" role="img" aria-label="${esc(s.fromName)} → ${esc(s.toName)}：${LEVEL_LABELS[s.level]}">${s.level === 'unmeasured' ? '–' : art.levelIcon(s.level, 22)}</div>`)
-        .join('') + `<div class="slot next ${open ? 'open' : ''}" role="img" aria-label="下一個站間"></div>`;
-    const legend = (['bloom', 'sprout', 'dry'] as const).map((l) => `<span>${art.levelIcon(l, 16)}${LEVEL_LABELS[l]}</span>`).join('');
-    stage.className = `stage ${splash ? 'splash' : ''}`;
-    stage.innerHTML = `<div class="drop">${splash ? art.dropSplash : art.dropCalm}</div><p class="caption">${text}</p><p class="sub">已澆 ${closed} 個站間</p><div class="slots">${slots}</div><div class="legend">${legend}</div>`;
+    setText('#cap', now < captionUntil ? caption : v.dwelling ? '靠站中，停靠時間不計分' : v.segments.length ? '穩穩澆水中' : '開始澆水');
+    setText('#sub', `已澆 ${closed} 個站間`);
+    const open = v.segments.some((s) => s.open);
+    const done = v.segments.filter((s) => !s.open).slice(-SLOT_SHOWN);
+    const key = `${closed}:${done.map((s) => s.level).join()}:${open}`;
+    if (key !== slotKey) {
+      const grew = closed > slotClosed;
+      slotKey = key;
+      slotClosed = closed;
+      $('#slots').innerHTML =
+        done
+          .map((s, i) => `<div class="slot lv-${s.level}${grew && i === done.length - 1 ? ' pop' : ''}" role="img" aria-label="${esc(s.fromName)} → ${esc(s.toName)}：${LEVEL_LABELS[s.level]}">${s.level === 'unmeasured' ? '–' : art.levelIcon(s.level, 22)}</div>`)
+          .join('') + `<div class="slot next ${open ? 'open' : ''}" role="img" aria-label="下一個站間"></div>`;
+    }
   };
   const timer = window.setInterval(tick, 500);
   tick();

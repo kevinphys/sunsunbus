@@ -25,8 +25,11 @@ export const fruitIcon = `<svg aria-hidden="true" width="20" height="20" viewBox
 
 export const dropCalm = svg(
   '小水滴穩穩坐著', 150, 170, '0 0 160 180',
-  '<path d="M80 10 C 50 60, 24 92, 24 120 A 56 56 0 0 0 136 120 C 136 92, 110 60, 80 10 Z" fill="#7CC4E4" stroke="#D8F0FA" stroke-width="4"/><circle cx="60" cy="118" r="7" fill="#15302B"/><circle cx="100" cy="118" r="7" fill="#15302B"/><path d="M62 140 Q 80 154 98 140" fill="none" stroke="#15302B" stroke-width="5" stroke-linecap="round"/><ellipse cx="54" cy="86" rx="9" ry="16" fill="#D8F0FA"/>',
+  '<path d="M80 10 C 50 60, 24 92, 24 120 A 56 56 0 0 0 136 120 C 136 92, 110 60, 80 10 Z" fill="#7CC4E4" stroke="#D8F0FA" stroke-width="4"/><ellipse class="eye" cx="60" cy="118" rx="7" ry="7.5" fill="#15302B"/><ellipse class="eye" cx="100" cy="118" rx="7" ry="7.5" fill="#15302B"/><ellipse cx="46" cy="134" rx="7" ry="4" fill="#F4A6A0" opacity="0.8"/><ellipse cx="114" cy="134" rx="7" ry="4" fill="#F4A6A0" opacity="0.8"/><path d="M62 140 Q 80 154 98 140" fill="none" stroke="#15302B" stroke-width="5" stroke-linecap="round"/><ellipse cx="54" cy="86" rx="9" ry="16" fill="#D8F0FA"/>',
 );
+
+/** 穩穩坐著時底下滴的水 */
+export const drips = `<svg aria-hidden="true" class="drips" width="150" height="30" viewBox="0 0 150 30"><circle class="drip" cx="45" cy="6" r="4" fill="#7CC4E4"/><circle class="drip d2" cx="75" cy="6" r="4" fill="#7CC4E4"/><circle class="drip d3" cx="105" cy="6" r="4" fill="#7CC4E4"/></svg>`;
 
 export const dropSplash = svg(
   '晃了一下，小水滴被甩出去', 190, 170, '0 0 200 180',
