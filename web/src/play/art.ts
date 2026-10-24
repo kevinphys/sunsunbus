@@ -34,3 +34,14 @@ export const fruitScout = svg(
 );
 
 export const flowers = `<svg aria-hidden="true" width="200" height="40" viewBox="0 0 200 40"><g fill="#F2A33A"><circle cx="20" cy="20" r="14"/><circle cx="60" cy="20" r="14"/><circle cx="100" cy="20" r="14"/><circle cx="140" cy="20" r="14"/><circle cx="180" cy="20" r="14"/></g><g fill="#F7F3EA"><circle cx="20" cy="20" r="6"/><circle cx="60" cy="20" r="6"/><circle cx="100" cy="20" r="6"/><circle cx="140" cy="20" r="6"/><circle cx="180" cy="20" r="6"/></g></svg>`;
+
+// 站間等級圖示（wireframe 第三版）：盛開＝五瓣花、小花＝發芽的小花、乾土＝裂開的土堆
+const LEVEL_ICON_BODY = {
+  bloom: '<g fill="#F2A33A"><circle cx="12" cy="6" r="4.2"/><circle cx="17.7" cy="10.2" r="4.2"/><circle cx="15.5" cy="17" r="4.2"/><circle cx="8.5" cy="17" r="4.2"/><circle cx="6.3" cy="10.2" r="4.2"/></g><circle cx="12" cy="12" r="3.2" fill="#F7F3EA"/>',
+  sprout: '<path d="M12 22 V13" stroke="#5FB3A0" stroke-width="2.4" stroke-linecap="round"/><path d="M12 17 C 8 17, 6 15, 6 12 C 9 12, 11 14, 12 17 Z" fill="#5FB3A0"/><g fill="#E9C46A"><circle cx="12" cy="6" r="2.8"/><circle cx="15.2" cy="8.6" r="2.8"/><circle cx="12" cy="11.2" r="2.8"/><circle cx="8.8" cy="8.6" r="2.8"/></g><circle cx="12" cy="8.6" r="1.8" fill="#A9520F"/>',
+  dry: '<path d="M2 20 C 5 12, 19 12, 22 20 Z" fill="#6B5A43"/><path d="M9 15 l 2 2 l -1 3 M15 15 l -1.5 2.5 l 1.5 2.5" fill="none" stroke="#C9A97A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+};
+
+/** 站間等級圖示；沒量到沒有圖示 */
+export const levelIcon = (level: 'bloom' | 'sprout' | 'dry' | 'unmeasured', size: number) =>
+  level === 'unmeasured' ? '' : `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24">${LEVEL_ICON_BODY[level]}</svg>`;

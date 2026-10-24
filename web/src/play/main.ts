@@ -311,10 +311,11 @@ function ridingView() {
       v.segments
         .filter((s) => !s.open)
         .slice(-SLOT_SHOWN)
-        .map((s) => `<p class="slot lv-${s.level}" title="${esc(s.fromName)} → ${esc(s.toName)}">${LEVEL_LABELS[s.level]}</p>`)
-        .join('') + `<p class="slot next ${open ? 'open' : ''}">${open ? '…' : ''}</p>`;
+        .map((s) => `<div class="slot lv-${s.level}" role="img" aria-label="${esc(s.fromName)} → ${esc(s.toName)}：${LEVEL_LABELS[s.level]}">${s.level === 'unmeasured' ? '–' : art.levelIcon(s.level, 22)}</div>`)
+        .join('') + `<div class="slot next ${open ? 'open' : ''}" role="img" aria-label="下一個站間"></div>`;
+    const legend = (['bloom', 'sprout', 'dry'] as const).map((l) => `<span>${art.levelIcon(l, 16)}${LEVEL_LABELS[l]}</span>`).join('');
     stage.className = `stage ${splash ? 'splash' : ''}`;
-    stage.innerHTML = `${splash ? art.dropSplash : art.dropCalm}<p class="caption">${text}</p><p class="sub">已澆 ${closed} 個站間</p><div class="slots">${slots}</div>`;
+    stage.innerHTML = `<div class="drop">${splash ? art.dropSplash : art.dropCalm}</div><p class="caption">${text}</p><p class="sub">已澆 ${closed} 個站間</p><div class="slots">${slots}</div><div class="legend">${legend}</div>`;
   };
   const timer = window.setInterval(tick, 500);
   tick();
@@ -324,7 +325,7 @@ function ridingView() {
 
 // ---------- ③ 下車 review ----------
 
-const tagHtml = (level: Level) => `<span class="tag lv-${level}">${LEVEL_LABELS[level]}</span>`;
+const tagHtml = (level: Level) => `<span class="tag lv-${level}">${art.levelIcon(level, 18)}${LEVEL_LABELS[level]}</span>`;
 const minutes = (m: TripMeta) => Math.max(1, Math.round(((m.endedAt ?? m.createdAt) - m.createdAt) / 60000));
 const flowerCount = (r: RideResult) => r.levelCounts.bloom + r.levelCounts.sprout;
 
