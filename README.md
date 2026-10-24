@@ -2,6 +2,16 @@
 
 線上試玩：<https://kevinphys.github.io/sunsunbus/play.html>
 
+Demo 影片：<https://youtube.com/shorts/fMHd2bKCxgo?feature=share>
+
+
+<img width="294" height="517" alt="Screenshot 2026-10-24 at 6 02 13 PM" src="https://github.com/user-attachments/assets/e6bf94f6-9430-480d-9699-6521bd1f81ab" />
+<img width="292" height="517" alt="Screenshot 2026-10-24 at 5 59 54 PM" src="https://github.com/user-attachments/assets/97ed8abb-674f-4135-9708-a15d9210493a" />
+<img width="294" height="517" alt="Screenshot 2026-10-24 at 6 00 13 PM" src="https://github.com/user-attachments/assets/92bc8d59-f968-4c0a-a0b4-d44e69c86fcd" />
+
+
+
+
 > 開順不開慢：讓人跌倒的是加速度與加加速度（jerk），不是速度。
 
 用乘客手機量測台北公車的加速度、急煞、急轉彎與加加速度，補上「台北沒有公開實測資料」的空白。
