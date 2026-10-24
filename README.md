@@ -2,10 +2,7 @@
 
 線上試玩：<https://kevinphys.github.io/sunsunbus/play.html>
 
-Demo 影片：<https://youtube.com/shorts/fMHd2bKCxgo?feature=share>
-
-
-<img width="294" height="517" alt="Screenshot 2026-10-24 at 6 02 13 PM" src="https://github.com/user-attachments/assets/e6bf94f6-9430-480d-9699-6521bd1f81ab" />
+[<img width="294" height="517" alt="Screenshot 2026-10-24 at 6 02 13 PM" src="https://github.com/user-attachments/assets/e6bf94f6-9430-480d-9699-6521bd1f81ab" />](https://youtube.com/shorts/fMHd2bKCxgo?feature=share)
 <img width="292" height="517" alt="Screenshot 2026-10-24 at 5 59 54 PM" src="https://github.com/user-attachments/assets/97ed8abb-674f-4135-9708-a15d9210493a" />
 <img width="294" height="517" alt="Screenshot 2026-10-24 at 6 00 13 PM" src="https://github.com/user-attachments/assets/92bc8d59-f968-4c0a-a0b4-d44e69c86fcd" />
 
